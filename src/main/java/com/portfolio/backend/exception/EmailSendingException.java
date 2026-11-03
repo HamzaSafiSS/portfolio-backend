@@ -1,8 +1,5 @@
 package com.portfolio.backend.exception;
 
-/**
- * Exception thrown when an email cannot be prepared, formatted, or delivered via SMTP.
- */
 public class EmailSendingException extends RuntimeException {
 
     public EmailSendingException(String message) {
@@ -13,4 +10,3 @@ public class EmailSendingException extends RuntimeException {
         super(message, cause);
     }
 }
-

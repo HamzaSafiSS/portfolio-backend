@@ -8,9 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Data Transfer Object representing an incoming contact form submission.
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -34,4 +31,3 @@ public class ContactRequest {
     @Size(min = 10, max = 3000, message = "Message must be between 10 and 3000 characters")
     private String message;
 }
-

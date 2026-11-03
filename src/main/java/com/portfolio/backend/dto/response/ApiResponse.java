@@ -8,11 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
-/**
- * Generic API response envelope for consistent REST responses.
- *
- * @param <T> Payload data type (optional).
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -65,4 +60,3 @@ public class ApiResponse<T> {
                 .build();
     }
 }
-
