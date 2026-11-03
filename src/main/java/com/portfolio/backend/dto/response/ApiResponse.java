@@ -23,14 +23,12 @@ public class ApiResponse<T> {
     public ApiResponse(boolean success, String message) {
         this.success = success;
         this.message = message;
-        this.timestamp = Instant.now();
     }
 
     public static <T> ApiResponse<T> success(String message) {
         return ApiResponse.<T>builder()
                 .success(true)
                 .message(message)
-                .timestamp(Instant.now())
                 .build();
     }
 
@@ -39,7 +37,6 @@ public class ApiResponse<T> {
                 .success(true)
                 .message(message)
                 .data(data)
-                .timestamp(Instant.now())
                 .build();
     }
 
@@ -47,7 +44,6 @@ public class ApiResponse<T> {
         return ApiResponse.<T>builder()
                 .success(false)
                 .message(message)
-                .timestamp(Instant.now())
                 .build();
     }
 
@@ -56,7 +52,6 @@ public class ApiResponse<T> {
                 .success(false)
                 .message(message)
                 .data(data)
-                .timestamp(Instant.now())
                 .build();
     }
 }
