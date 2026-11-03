@@ -19,7 +19,7 @@ public class ContactServiceImpl implements ContactService {
     private final EmailService emailService;
 
     @Override
-    public void processContactSubmission(ContactRequest request) {
+    public void submitContact(ContactRequest request) {
         Objects.requireNonNull(request, "Contact request must not be null");
 
         if (request.getHoneypot() != null && !request.getHoneypot().isBlank()) {

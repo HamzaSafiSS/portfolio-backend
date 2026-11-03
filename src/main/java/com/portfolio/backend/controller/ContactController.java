@@ -30,7 +30,7 @@ public class ContactController {
             throw new RateLimitExceededException("Too many requests. Please try again later.");
         }
 
-        contactService.processContactSubmission(request);
+        contactService.submitContact(request);
         return ResponseEntity.ok(ApiResponse.success("Your message has been sent successfully."));
     }
 
