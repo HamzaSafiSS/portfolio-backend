@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portfolio.backend.dto.request.ContactRequest;
 import com.portfolio.backend.exception.EmailSendingException;
 import com.portfolio.backend.service.ContactService;
+import com.portfolio.backend.service.RateLimiterService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -16,6 +18,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,6 +34,14 @@ class ContactControllerTest {
 
     @MockitoBean
     private ContactService contactService;
+
+    @MockitoBean
+    private RateLimiterService rateLimiterService;
+
+    @BeforeEach
+    void setUp() {
+        when(rateLimiterService.tryAcquire(any())).thenReturn(true);
+    }
 
     @Test
     void submitContact_Success_Returns200() throws Exception {
@@ -54,24 +65,60 @@ class ContactControllerTest {
     }
 
     @Test
-    void submitContact_EndpointAlias_Returns200() throws Exception {
+    void submitContact_RateLimitExceeded_Returns429() throws Exception {
         ContactRequest request = ContactRequest.builder()
-                .name("Jane Doe")
-                .email("jane@example.com")
-                .subject("Freelance Work")
-                .message("Let us collaborate on a new website.")
+                .name("John Doe")
+                .email("john@example.com")
+                .subject("Project Inquiry")
+                .message("I would like to discuss a project.")
                 .build();
 
-        doNothing().when(contactService).processContactSubmission(any(ContactRequest.class));
+        when(rateLimiterService.tryAcquire(any())).thenReturn(false);
 
-        mockMvc.perform(post("/api/contact")
+        mockMvc.perform(post("/api/v1/contact")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Your message has been sent successfully."));
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Too many requests. Please try again later."));
 
-        verify(contactService).processContactSubmission(any(ContactRequest.class));
+        verify(contactService, never()).processContactSubmission(any());
+    }
+
+    @Test
+    void submitContact_HeaderInjectionInSubject_Returns400() throws Exception {
+        ContactRequest request = ContactRequest.builder()
+                .name("John Doe")
+                .email("john@example.com")
+                .subject("Subject\r\nBcc: victim@example.com")
+                .message("I would like to discuss a project.")
+                .build();
+
+        mockMvc.perform(post("/api/v1/contact")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(contactService, never()).processContactSubmission(any());
+    }
+
+    @Test
+    void submitContact_HeaderInjectionInName_Returns400() throws Exception {
+        ContactRequest request = ContactRequest.builder()
+                .name("John\nDoe")
+                .email("john@example.com")
+                .subject("Project Inquiry")
+                .message("I would like to discuss a project.")
+                .build();
+
+        mockMvc.perform(post("/api/v1/contact")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(contactService, never()).processContactSubmission(any());
     }
 
     @Test
@@ -186,4 +233,3 @@ class ContactControllerTest {
                 .andExpect(jsonPath("$.message").value("An unexpected error occurred. Please try again later."));
     }
 }
-

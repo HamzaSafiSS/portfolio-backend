@@ -68,6 +68,10 @@ public class EmailServiceImpl implements EmailService {
             throw new EmailSendingException("Cannot send email: Recipient address is empty.");
         }
 
+        String cleanTo = to.replaceAll("[\\r\\n]", "").trim();
+        String cleanSubject = (subject != null ? subject : "Portfolio Notification").replaceAll("[\\r\\n]", " ").trim();
+        String cleanReplyTo = (replyTo != null && !replyTo.isBlank()) ? replyTo.replaceAll("[\\r\\n]", "").trim() : null;
+
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, false, StandardCharsets.UTF_8.name());
@@ -78,23 +82,23 @@ public class EmailServiceImpl implements EmailService {
                 helper.setFrom(mailFrom.trim());
             }
 
-            helper.setTo(to.trim());
-            helper.setSubject(subject != null ? subject : "Portfolio Notification");
+            helper.setTo(cleanTo);
+            helper.setSubject(cleanSubject);
             helper.setText(content, isHtml);
 
-            if (replyTo != null && !replyTo.isBlank()) {
-                helper.setReplyTo(replyTo.trim());
+            if (cleanReplyTo != null && !cleanReplyTo.isBlank()) {
+                helper.setReplyTo(cleanReplyTo);
             }
 
             mailSender.send(mimeMessage);
-            log.info("Email successfully dispatched to recipient [{}] with subject [{}]", to.trim(), subject);
+            log.info("Email successfully dispatched to recipient [{}] with subject [{}]", cleanTo, cleanSubject);
 
         } catch (MessagingException | MailException e) {
-            log.error("SMTP error while delivering email to [{}]. Reason: {}", to.trim(), e.getMessage());
-            throw new EmailSendingException("Failed to send email to " + to.trim() + " via SMTP: " + e.getMessage(), e);
+            log.error("SMTP error while delivering email to [{}]. Reason: {}", cleanTo, e.getMessage());
+            throw new EmailSendingException("Failed to send email to " + cleanTo + " via SMTP: " + e.getMessage(), e);
         } catch (Exception e) {
-            log.error("Unexpected error during email delivery to [{}]. Reason: {}", to.trim(), e.getMessage());
-            throw new EmailSendingException("Unexpected error sending email to " + to.trim() + ": " + e.getMessage(), e);
+            log.error("Unexpected error during email delivery to [{}]. Reason: {}", cleanTo, e.getMessage());
+            throw new EmailSendingException("Unexpected error sending email to " + cleanTo + ": " + e.getMessage(), e);
         }
     }
 
@@ -196,4 +200,3 @@ public class EmailServiceImpl implements EmailService {
             """.formatted(name, originalSubject);
     }
 }
-

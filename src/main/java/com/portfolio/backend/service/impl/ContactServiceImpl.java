@@ -3,6 +3,7 @@ package com.portfolio.backend.service.impl;
 import com.portfolio.backend.dto.request.ContactRequest;
 import com.portfolio.backend.email.EmailService;
 import com.portfolio.backend.exception.EmailSendingException;
+import com.portfolio.backend.exception.SpamDetectedException;
 import com.portfolio.backend.service.ContactService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,9 +22,14 @@ public class ContactServiceImpl implements ContactService {
     public void processContactSubmission(ContactRequest request) {
         Objects.requireNonNull(request, "Contact request must not be null");
 
-        String name = request.getName() != null ? request.getName().trim() : "";
-        String email = request.getEmail() != null ? request.getEmail().trim() : "";
-        String subject = request.getSubject() != null ? request.getSubject().trim() : "";
+        if (request.getHoneypot() != null && !request.getHoneypot().isBlank()) {
+            log.warn("Spam submission blocked by honeypot field from email [{}]", request.getEmail());
+            throw new SpamDetectedException("Automated submission detected");
+        }
+
+        String name = sanitizeHeader(request.getName());
+        String email = sanitizeHeader(request.getEmail());
+        String subject = sanitizeHeader(request.getSubject());
         String message = request.getMessage() != null ? request.getMessage().trim() : "";
 
         log.info("Processing contact submission from [{}] with subject [{}]", email, subject);
@@ -38,5 +44,12 @@ public class ContactServiceImpl implements ContactService {
             log.warn("Owner notified, but failed to send confirmation receipt to visitor [{}]. Reason: {}",
                     email, ex.getMessage());
         }
+    }
+
+    private String sanitizeHeader(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replaceAll("[\\r\\n]", " ").trim();
     }
 }
