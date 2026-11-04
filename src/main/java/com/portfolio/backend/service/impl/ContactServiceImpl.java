@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -37,13 +38,15 @@ public class ContactServiceImpl implements ContactService {
         emailService.sendContactNotification(name, email, subject, message);
         log.info("Contact notification successfully sent to owner for inquiry from [{}]", email);
 
-        try {
-            emailService.sendConfirmationEmail(name, email, subject);
-            log.info("Confirmation email successfully sent to visitor [{}]", email);
-        } catch (EmailSendingException ex) {
-            log.warn("Owner notified, but failed to send confirmation receipt to visitor [{}]. Reason: {}",
-                    email, ex.getMessage());
-        }
+        CompletableFuture.runAsync(() -> {
+            try {
+                emailService.sendConfirmationEmail(name, email, subject);
+                log.info("Confirmation email successfully sent to visitor [{}]", email);
+            } catch (EmailSendingException ex) {
+                log.warn("Owner notified, but failed to send confirmation receipt to visitor [{}]. Reason: {}",
+                        email, ex.getMessage());
+            }
+        });
     }
 
     private String sanitizeHeader(String value) {
