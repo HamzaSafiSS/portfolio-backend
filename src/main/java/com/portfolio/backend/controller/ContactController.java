@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +20,11 @@ public class ContactController {
 
     private final ContactService contactService;
     private final RateLimiterService rateLimiterService;
+
+    @GetMapping("/")
+    public ResponseEntity<ApiResponse<Void>> root() {
+        return ResponseEntity.ok(ApiResponse.success("Portfolio Contact API is running."));
+    }
 
     @PostMapping({"/api/v1/contact", "/api/contact"})
     public ResponseEntity<ApiResponse<Void>> submitContact(
