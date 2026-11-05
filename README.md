@@ -48,7 +48,7 @@ cp .env.example .env
 | `SPRING_PROFILES_ACTIVE` | Active Spring profile (`dev` or `prod`) | `dev` |
 | `SERVER_PORT` / `PORT` | HTTP server port | `8080` |
 | `SMTP_HOST` | Brevo SMTP host | `smtp-relay.brevo.com` |
-| `SMTP_PORT` | Brevo SMTP port | `587` |
+| `SMTP_PORT` | Brevo SMTP port (Use 465 for SSL on Render / Cloud) | `465` |
 | `SMTP_USERNAME` | Brevo SMTP login email | `your-brevo-login@domain.com` |
 | `SMTP_PASSWORD` | Brevo master SMTP key | `xsmtpsib-...` |
 | `MAIL_FROM` | Verified sender email in Brevo | `contact@yourdomain.com` |
